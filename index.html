@@ -169,11 +169,11 @@ function placeGroups(rows,fn){
 }
 /* League points for one tournament, league members only (guests left out), N = members who played:
    place p earns N-p+1 and the winner gets +2. Players still tied share the average of the places they cover. */
-/* Scratch: members' gross Stableford; equal gross is ordered by the net Stableford position of the day (sk); no scratch playoffs: players level on both share the average */
+/* Scratch: members' gross Stableford; players on the same gross share the points of the places they cover (two tied 2nd share places 2 and 3, the next takes place 4) */
 function scrRows(r){
-  var g=r.gross||{}, np={}; dayRows(r).forEach(function(x){np[x.id]=x.pos;});
-  var rows=Object.keys(g).filter(function(k){return typeof g[k]==="number";}).map(function(k){var p=player(k);return {id:k,name:p?p.name:"(jugador eliminado)",team:p?p.team:"",pts:g[k],net:r.scores[k],guest:false,sk:np[k]};});
-  rows.sort(function(a,b){return b.pts-a.pts||a.sk-b.sk||a.name.localeCompare(b.name,"es");});
+  var g=r.gross||{};
+  var rows=Object.keys(g).filter(function(k){return typeof g[k]==="number";}).map(function(k){var p=player(k);return {id:k,name:p?p.name:"(jugador eliminado)",team:p?p.team:"",pts:g[k],net:r.scores[k],guest:false};});
+  rows.sort(function(a,b){return b.pts-a.pts||a.name.localeCompare(b.name,"es");});
   placeGroups(rows,function(x,pos,tie){x.pos=pos;x.posLabel=(tie?"T":"")+pos;x.tie=tie;});
   return rows;
 }
@@ -287,7 +287,7 @@ function render(){
   else if(ui.tab==="equipes") h+=viewEquipes(rs);
   else if(ui.tab==="tournois") h+=viewTournoi(rs);
   else h+=viewGerer(rs);
-  h+='</div></main><footer><strong>Actualizado el 22/10/2026</strong> · Clasificación individual = puntos inaugural + puntos de liga (por torneo, entre N socios: posición p = N−p+1, ganador +2; empates sin desempatar = media) · equipos = inaugural + suma de las medias Stableford del equipo en cada torneo (exactas; por torneo se muestran redondeadas) · invitados: solo cuentan para fijar la posición n/2 de la Burbuja, que gana el socio más cercano; empates en esa posición: putting green, o si no lo hubo, el handicap más alto · scratch = mismos puntos por posición con el Stableford bruto, sin inaugural; empate en bruto: decide la posición en neto, si no, media · Puttmaster: 1 punto por rival ganado en cada desempate en el putting green · ganador del día: mejor socio de la liga · empates: desempate en el putting green</footer>';
+  h+='</div></main><footer><strong>Actualizado el 23/10/2026</strong> · Clasificación individual = puntos inaugural + puntos de liga (por torneo, entre N socios: posición p = N−p+1, ganador +2; empates sin desempatar = media) · equipos = inaugural + suma de las medias Stableford del equipo en cada torneo (exactas; por torneo se muestran redondeadas) · invitados: solo cuentan para fijar la posición n/2 de la Burbuja, que gana el socio más cercano; empates en esa posición: putting green, o si no lo hubo, el handicap más alto · scratch = mismos puntos por posición con el Stableford bruto, sin inaugural; empate en bruto: se reparten los puntos de sus posiciones · Puttmaster: 1 punto por rival ganado en cada desempate en el putting green · ganador del día: mejor socio de la liga · empates: desempate en el putting green</footer>';
   document.getElementById("app").innerHTML=h;
   var f=document.getElementById("rd-date"); if(f&&!f.value&&!ui.editId) f.value=nextSunday();
 }
@@ -388,7 +388,7 @@ function modeSwitch(){
 }
 function viewScratch(L,rs){
   var rows=rank(L.map(function(r){return {id:r.id,name:r.name,team:r.team,total:r.scr.total,played:r.scr.played,avg:r.scr.avg,per:r.scr.per};}),"total");
-  var h='<div class="section-head"><h2>Clasificación scratch</h2><p class="hint">Mismos puntos por posición que la liga, calculados con el Stableford bruto · sin inaugural · empate en bruto: decide la posición en neto; si también empatan en neto, media de los puntos · en pequeño, los puntos brutos</p></div>';
+  var h='<div class="section-head"><h2>Clasificación scratch</h2><p class="hint">Mismos puntos por posición que la liga, calculados con el Stableford bruto · sin inaugural · empate en bruto: se reparten los puntos de las posiciones que ocupan · en pequeño, los puntos brutos</p></div>';
   if(!rows.some(function(r){return r.played;})) return h+'<div class="board empty">Todavía no hay resultados brutos. Introdúcelos en Gestionar, columna «Bruto».</div>';
   h+='<div class="board"><table><thead><tr><th class="l sticky">Pos</th><th class="l sticky2">Jugador</th><th title="Handicap">HC</th><th>J</th><th>Total</th><th title="Media Stableford bruto">Media brut.</th>';
   rs.forEach(function(r){h+='<th class="rd">'+shortDate(r.date)+'</th>';});
