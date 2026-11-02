@@ -1,4 +1,5 @@
-<!doctype html><html lang="es"><head><meta name="description" content="Resultados y clasificaciones de la liga de golf LIV Las Matas"><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body><title>LIV Las Matas</title>
+<!doctype html><html lang="es"><head><meta name="description" content="Resultados y clasificaciones de la liga de golf LIV Las Matas"><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>LIV Las Matas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Public+Sans:wght@400;500;600&display=swap">
 <style id="app-style">
 /* Layout: tournament leaderboard board — a header band, tabs, then scorecard-style tables that scroll inside their own frame */
@@ -311,13 +312,14 @@ function viewLigue(L,rs){
   if(ui.mode==="bur") return modeSwitch()+viewMidSeason(rs);
   if(ui.mode==="win") return modeSwitch()+viewWins(rs);
   var h=modeSwitch()+'<div class="section-head"><h2>Clasificación individual</h2><p class="hint">Puntos de liga por torneo (en pequeño, los Stableford) · Total = inaugural + puntos · J = torneos jugados · en verde = ganador del día</p></div>';
-  h+='<div class="board"><table><thead><tr><th class="l sticky">Pos</th><th class="l sticky2">Jugador</th><th>J</th><th>Total</th><th>Inaug.</th><th title="Media Stableford">Media Stb.</th>';
+  h+='<div class="board"><table><thead><tr><th class="l sticky">Pos</th><th class="l sticky2">Jugador</th><th title="Handicap">HC</th><th>J</th><th>Total</th><th>Inaug.</th><th title="Media Stableford">Media Stb.</th>';
   rs.forEach(function(r){h+='<th class="rd" title="'+esc(r.course)+'">'+shortDate(r.date)+'</th>';});
   h+='</tr></thead><tbody>';
   L.forEach(function(r){
     var t=team(r.team);
     h+='<tr class="'+(r.pos<=3&&r.played?'top':'')+'"><td class="pos sticky">'+r.posLabel+'</td><td class="l sticky2"><div class="name">'+esc(r.name)+capTag(r.id)+'</div>'+chip(t)+'</td>';
-    h+='<td>'+r.played+'</td><td class="total">'+nfmt(r.total)+'</td><td>'+nfmt(r.ini)+'</td><td>'+(r.played?f1(r.avg):'–')+'</td>';
+    var hp=player(r.id), hv=hcOf(hp);
+    h+='<td><span class="hcv '+hcTrend(hp)+'"'+hcTitle(hp)+'>'+(hv<99?f1(hv):'–')+'</span></td><td>'+r.played+'</td><td class="total">'+nfmt(r.total)+'</td><td>'+nfmt(r.ini)+'</td><td>'+(r.played?f1(r.avg):'–')+'</td>';
     r.per.forEach(function(v){h+='<td class="rd'+(v?(v.win?' best':''):' miss')+'" title="'+(v?v.s+' Stableford':'Ausente')+'">'+(v?nfmt(v.p)+'<small class="stb">'+v.s+'</small>':'–')+'</td>';});
     h+='</tr>';
   });
@@ -814,4 +816,5 @@ render();
 })();
 })();
 </script>
+
 </body></html>
