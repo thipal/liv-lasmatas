@@ -1,4 +1,5 @@
-<!doctype html><html lang="es"><head><meta name="description" content="Resultados y clasificaciones de la liga de golf LIV Las Matas"><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body><title>LIV Las Matas</title>
+<!doctype html><html lang="es"><head><meta name="description" content="Resultados y clasificaciones de la liga de golf LIV Las Matas"><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>LIV Las Matas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Public+Sans:wght@400;500;600&display=swap">
 <style id="app-style">
 /* Layout: tournament leaderboard board — a header band, tabs, then scorecard-style tables that scroll inside their own frame */
@@ -54,6 +55,7 @@ td.total{font-family:var(--display);font-weight:700;font-size:20px;color:var(--i
 th.rd{font-size:12px;letter-spacing:.04em}
 td.rd{color:var(--ink);min-width:44px}
 td.rd.miss{color:var(--line)}
+td.rd.drop{text-decoration:line-through;color:var(--muted);font-weight:400}
 td.rd.best{font-weight:700;color:var(--green)}
 td.rd small.stb{display:block;font-size:11px;font-weight:400;color:var(--muted);line-height:1.1}
 .name{font-weight:600}
@@ -247,15 +249,19 @@ function rank(rows,key){
   });
   return rows;
 }
+var BEST_N=12;
 function league(){
   var rs=rounds();
   var LP=rs.map(function(r){var m=ligaPts(r),best=0;for(var k in m) if(m[k]>best) best=m[k];m.__win=best;return m;});
   var SP=rs.map(function(r){var m=scrPts(r),best=0;for(var k in m) if(m[k]>best) best=m[k];m.__win=best;return m;});
   var rows=S.players.map(function(p){
     var stb=0,n=0,lp=0,per=[],ini=inaug(team(p.team));
-    rs.forEach(function(r,i){var v=r.scores[p.id]; if(typeof v==="number"){stb+=v;n++; var q=LP[i][p.id]; lp+=q; per.push({s:v,p:q,win:q===LP[i].__win});} else per.push(null);});
+    rs.forEach(function(r,i){var v=r.scores[p.id]; if(typeof v==="number"){stb+=v;n++; var q=LP[i][p.id]; per.push({s:v,p:q,win:q===LP[i].__win});} else per.push(null);});
+    /* Only a player's BEST_N best league-point results count towards the total; the rest are shown as discarded */
+    per.filter(function(v){return v;}).sort(function(a,b){return b.p-a.p;}).forEach(function(v,k){if(k<BEST_N) lp+=v.p; else v.drop=true;});
     var sp=0,sn=0,gs=0,sper=[];
-    rs.forEach(function(r,i){var g=(r.gross||{})[p.id]; if(typeof g==="number"){var q=SP[i][p.id]; sp+=q; sn++; gs+=g; sper.push({s:g,p:q,win:q===SP[i].__win});} else sper.push(null);});
+    rs.forEach(function(r,i){var g=(r.gross||{})[p.id]; if(typeof g==="number"){var q=SP[i][p.id]; sn++; gs+=g; sper.push({s:g,p:q,win:q===SP[i].__win});} else sper.push(null);});
+    sper.filter(function(v){return v;}).sort(function(a,b){return b.p-a.p;}).forEach(function(v,k){if(k<BEST_N) sp+=v.p; else v.drop=true;});
     return {id:p.id,name:p.name,team:p.team,ini:ini,total:r1(ini+lp),played:n,avg:n?stb/n:0,per:per,scr:{total:r1(sp),played:sn,avg:sn?gs/sn:0,per:sper}};
   });
   return rank(rows,"total");
@@ -299,7 +305,7 @@ function render(){
   else if(ui.tab==="equipes") h+=viewEquipes(rs);
   else if(ui.tab==="tournois") h+=viewTournoi(rs);
   else h+=viewGerer(rs);
-  h+='</div></main><footer><strong>Actualizado el 22/11/2026</strong> · Clasificación individual = puntos inaugural + puntos de liga (por torneo, entre N socios: posición p = N−p+1, ganador +2; empates sin desempatar = media) · equipos = inaugural + suma de las medias Stableford del equipo en cada torneo (exactas; por torneo se muestran redondeadas) · invitados: solo cuentan para fijar la posición n/2 de la Burbuja, que gana el socio más cercano; empates en esa posición: putting green, o si no lo hubo, el handicap más alto · scratch = mismos puntos por posición con el Stableford bruto, sin inaugural; empate en bruto: se reparten los puntos de sus posiciones · Puttmaster: 1 punto por rival ganado en cada desempate en el putting green · ganador del día: mejor socio de la liga · empates: desempate en el putting green</footer>';
+  h+='</div></main><footer><strong>Actualizado el 22/11/2026</strong> · Clasificación individual = puntos inaugural + los '+BEST_N+' mejores resultados en puntos de liga (por torneo, entre N socios: posición p = N−p+1, ganador +2; empates sin desempatar = media) · equipos = inaugural + suma de las medias Stableford del equipo en cada torneo (exactas; por torneo se muestran redondeadas) · invitados: solo cuentan para fijar la posición n/2 de la Burbuja, que gana el socio más cercano; empates en esa posición: putting green, o si no lo hubo, el handicap más alto · scratch = mismos puntos por posición con el Stableford bruto, sin inaugural; empate en bruto: se reparten los puntos de sus posiciones · Puttmaster: 1 punto por rival ganado en cada desempate en el putting green · ganador del día: mejor socio de la liga · empates: desempate en el putting green</footer>';
   document.getElementById("app").innerHTML=h;
   var f=document.getElementById("rd-date"); if(f&&!f.value&&!ui.editId) f.value=nextSunday();
 }
@@ -310,7 +316,7 @@ function viewLigue(L,rs){
   if(ui.mode==="putt") return modeSwitch()+viewPutt(rs);
   if(ui.mode==="bur") return modeSwitch()+viewMidSeason(rs);
   if(ui.mode==="win") return modeSwitch()+viewWins(rs);
-  var h=modeSwitch()+'<div class="section-head"><h2>Clasificación individual</h2><p class="hint">Puntos de liga por torneo (en pequeño, los Stableford) · Total = inaugural + puntos · J = torneos jugados · en verde = ganador del día</p></div>';
+  var h=modeSwitch()+'<div class="section-head"><h2>Clasificación individual</h2><p class="hint">Puntos de liga por torneo (en pequeño, los Stableford) · Total = inaugural + los '+BEST_N+' mejores resultados (tachados, los descartados) · J = torneos jugados · en verde = ganador del día</p></div>';
   h+='<div class="board"><table><thead><tr><th class="l sticky">Pos</th><th class="l sticky2">Jugador</th><th title="Handicap">HC</th><th>J</th><th>Total</th><th>Inaug.</th><th title="Media Stableford">Media Stb.</th>';
   rs.forEach(function(r){h+='<th class="rd" title="'+esc(r.course)+'">'+shortDate(r.date)+'</th>';});
   h+='</tr></thead><tbody>';
@@ -319,7 +325,7 @@ function viewLigue(L,rs){
     h+='<tr class="'+(r.pos<=3&&r.played?'top':'')+'"><td class="pos sticky">'+r.posLabel+'</td><td class="l sticky2"><div class="name">'+esc(r.name)+capTag(r.id)+'</div>'+chip(t)+'</td>';
     var hp=player(r.id), hv=hcOf(hp);
     h+='<td><span class="hcv '+hcTrend(hp)+'"'+hcTitle(hp)+'>'+(hv<99?f1(hv):'–')+'</span></td><td>'+r.played+'</td><td class="total">'+nfmt(r.total)+'</td><td>'+nfmt(r.ini)+'</td><td>'+(r.played?f1(r.avg):'–')+'</td>';
-    r.per.forEach(function(v){h+='<td class="rd'+(v?(v.win?' best':''):' miss')+'" title="'+(v?v.s+' Stableford':'Ausente')+'">'+(v?nfmt(v.p)+'<small class="stb">'+v.s+'</small>':'–')+'</td>';});
+    r.per.forEach(function(v){h+='<td class="rd'+(v?(v.win?' best':'')+(v.drop?' drop':''):' miss')+'" title="'+(v?v.s+' Stableford'+(v.drop?' · descartado (fuera de los '+BEST_N+' mejores)':''):'Ausente')+'">'+(v?nfmt(v.p)+'<small class="stb">'+v.s+'</small>':'–')+'</td>';});
     h+='</tr>';
   });
   h+='</tbody></table></div>';
@@ -401,7 +407,7 @@ function modeSwitch(){
 }
 function viewScratch(L,rs){
   var rows=rank(L.map(function(r){return {id:r.id,name:r.name,team:r.team,total:r.scr.total,played:r.scr.played,avg:r.scr.avg,per:r.scr.per};}),"total");
-  var h='<div class="section-head"><h2>Clasificación scratch</h2><p class="hint">Mismos puntos por posición que la liga, calculados con el Stableford bruto · sin inaugural · empate en bruto: se reparten los puntos de las posiciones que ocupan · en pequeño, los puntos brutos</p></div>';
+  var h='<div class="section-head"><h2>Clasificación scratch</h2><p class="hint">Mismos puntos por posición que la liga, calculados con el Stableford bruto · sin inaugural · cuentan los '+BEST_N+' mejores resultados (tachados, los descartados) · empate en bruto: se reparten los puntos de las posiciones que ocupan · en pequeño, los puntos brutos</p></div>';
   if(!rows.some(function(r){return r.played;})) return h+'<div class="board empty">Todavía no hay resultados brutos. Introdúcelos en Gestionar, columna «Bruto».</div>';
   h+='<div class="board"><table><thead><tr><th class="l sticky">Pos</th><th class="l sticky2">Jugador</th><th title="Handicap">HC</th><th>J</th><th>Total</th><th title="Media Stableford bruto">Media brut.</th>';
   rs.forEach(function(r){h+='<th class="rd">'+shortDate(r.date)+'</th>';});
@@ -410,7 +416,7 @@ function viewScratch(L,rs){
     h+='<tr class="'+(r.pos<=3&&r.played?'top':'')+'"><td class="pos sticky">'+(r.played?r.posLabel:'–')+'</td><td class="l sticky2"><div class="name">'+esc(r.name)+capTag(r.id)+'</div>'+chip(team(r.team))+'</td>';
     var hp=player(r.id), hv=hcOf(hp);
     h+='<td><span class="hcv '+hcTrend(hp)+'"'+hcTitle(hp)+'>'+(hv<99?f1(hv):'–')+'</span></td><td>'+r.played+'</td><td class="total">'+nfmt(r.total)+'</td><td>'+(r.played?f1(r.avg):'–')+'</td>';
-    r.per.forEach(function(v){h+='<td class="rd'+(v?(v.win?' best':''):' miss')+'" title="'+(v?v.s+' Stableford bruto':'Sin resultado bruto')+'">'+(v?nfmt(v.p)+'<small class="stb">'+v.s+'</small>':'–')+'</td>';});
+    r.per.forEach(function(v){h+='<td class="rd'+(v?(v.win?' best':'')+(v.drop?' drop':''):' miss')+'" title="'+(v?v.s+' Stableford bruto'+(v.drop?' · descartado (fuera de los '+BEST_N+' mejores)':''):'Sin resultado bruto')+'">'+(v?nfmt(v.p)+'<small class="stb">'+v.s+'</small>':'–')+'</td>';});
     h+='</tr>';
   });
   return h+'</tbody></table></div>';
